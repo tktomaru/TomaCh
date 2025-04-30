@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -53,6 +54,8 @@ public class DashboardFragment extends Fragment {
     // プリファレンス名・キー
     private static final String PREFS_NAME = "openai_prefs";
     private static final String KEY_API = "api_key";
+    private static final String KEY_SHOW_ENGLISH = "show_english";
+    private SwitchCompat switchEnglish;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -63,6 +66,25 @@ public class DashboardFragment extends Fragment {
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        // SharedPreferences 取得
+        SharedPreferences settings = requireContext()
+                .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+
+        // 1) 保存済み設定を読み込んで初期状態をセット
+        // スイッチ参照＆リスナー登録
+        switchEnglish = root.findViewById(R.id.switchEnglish);
+        boolean showEnglish = settings.getBoolean(KEY_SHOW_ENGLISH, true);
+        switchEnglish.setChecked(showEnglish);
+
+
+        // 2) スイッチ操作で設定を保存＆Adapterに反映
+        switchEnglish.setOnCheckedChangeListener((button, isChecked) -> {
+            // プリファレンスに永続化
+            settings.edit()
+                    .putBoolean(KEY_SHOW_ENGLISH, isChecked)
+                    .apply();
+            // Adapter 側に表示切替を通知
+        });
         return root;
     }
 

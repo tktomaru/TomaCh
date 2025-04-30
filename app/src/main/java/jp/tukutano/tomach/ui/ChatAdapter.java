@@ -1,4 +1,4 @@
-package jp.tukutano.tomach.ui.notifications;
+package jp.tukutano.tomach.ui;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +20,8 @@ public class ChatAdapter
 
     private List<ChatMessage> list = new ArrayList<>();
     private final OnDeleteListener listener;
+    // 追加：英訳表示フラグ
+    private boolean showEnglish = true;
 
     public interface OnDeleteListener {
         void onDelete(ChatMessage msg);
@@ -42,6 +44,8 @@ public class ChatAdapter
         ChatMessage msg = list.get(pos);
         h.tvJa.setText(msg.contentJa);
         h.tvEn.setText(msg.contentEn);
+        // 英訳の表示/非表示
+        h.tvEn.setVisibility(showEnglish ? View.VISIBLE : View.GONE);
         h.btnDel.setOnClickListener(v -> listener.onDelete(msg));
     }
 
@@ -49,6 +53,12 @@ public class ChatAdapter
 
     public void setItems(List<ChatMessage> items) {
         list = items;
+        notifyDataSetChanged();
+    }
+
+    // 追加：英訳表示フラグ設定メソッド
+    public void setShowEnglish(boolean show) {
+        this.showEnglish = show;
         notifyDataSetChanged();
     }
 

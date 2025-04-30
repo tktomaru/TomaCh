@@ -20,10 +20,13 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -35,6 +38,7 @@ import java.util.Locale;
 import jp.tukutano.tomach.R;
 import jp.tukutano.tomach.databinding.FragmentHomeBinding;
 import jp.tukutano.tomach.db.ChatMessage;
+import jp.tukutano.tomach.ui.ChatAdapter;
 import jp.tukutano.tomach.util.LogUtils;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -48,7 +52,6 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
 
     private static final int PERMISSION_REQUEST_CODE = 100;
-    private TextView tvJapanese, tvEnglish;
     private SpeechRecognizer recognizer;
     private Button btnVoiceStart, btnStopSpeaking;   // 追加
     private Intent recogIntent;
@@ -60,10 +63,13 @@ public class HomeFragment extends Fragment {
     // 追加：会話履歴を保持する JsonArray
     private JsonArray chatHistory = new JsonArray();
     private static final String PREFS_NAME = "openai_prefs";
+    private static final String KEY_SHOW_ENGLISH = "show_english";
     private static final String KEY_API = "api_key";
     private String savedApiKey = "";
 
     private HomeViewModel viewModel;
+    private RecyclerView rvChat;
+    private ChatAdapter adapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -74,8 +80,17 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        tvJapanese = root.findViewById(R.id.tvJapanese);
-        tvEnglish  = root.findViewById(R.id.tvEnglish);
+        // RecyclerView のセットアップ
+        rvChat = root.findViewById(R.id.rvChat);
+        adapter = new ChatAdapter(msg -> viewModel.delete(msg));
+        rvChat.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvChat.setAdapter(adapter);
+        // DB から履歴を監視 → 更新が入るたび RecyclerView に反映
+        viewModel.getMessages().observe(getViewLifecycleOwner(), list -> {
+            adapter.setItems(list);
+            rvChat.scrollToPosition(list.size() - 1);
+        });
+
         btnVoiceStart = root.findViewById(R.id.btnVoiceStart);  // 追加
         btnStopSpeaking = root.findViewById(R.id.btnStopSpeaking); // 追加
 
@@ -118,21 +133,19 @@ public class HomeFragment extends Fragment {
             chatHistory.add(systemMsg);
 
             // 2) UI に既存メッセージを表示（起動時の再表示用）
-            tvJapanese.setText("");
-            tvEnglish.setText("");
             for (ChatMessage msg : list) {
                 // JSON 履歴にも追加
                 JsonObject jo = new JsonObject();
                 jo.addProperty("role", msg.role);
                 jo.addProperty("content", msg.contentJa);
                 chatHistory.add(jo);
-
-                // 画面表示にも追加
-                tvJapanese.append((msg.role.equals("user") ? "▶ ユーザー: " : "◀ AI: ")
-                        + msg.contentJa + "\n");
-                tvEnglish.append((msg.role.equals("user") ? "▶ You: " : "◀ AI: ")
-                        + msg.contentEn + "\n");
             }
+        });
+
+        // ViewModel の LiveData 監視など…
+        viewModel.getMessages().observe(getViewLifecycleOwner(), list -> {
+            adapter.setItems(list);
+            rvChat.scrollToPosition(list.size() - 1);
         });
 
         // ボタン押下で音声認識開始
@@ -152,6 +165,15 @@ public class HomeFragment extends Fragment {
         SharedPreferences prefs = requireActivity()
                 .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         savedApiKey = prefs.getString(KEY_API, "");
+
+
+        // SharedPreferences 取得
+        SharedPreferences settings = requireContext()
+                .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+
+        // 1) 保存済み設定を読み込んで初期状態をセット
+        boolean showEnglish = settings.getBoolean(KEY_SHOW_ENGLISH, true);
+        adapter.setShowEnglish(showEnglish);
 
         // 最初のリスニング開始
         startListening();
@@ -265,9 +287,9 @@ public class HomeFragment extends Fragment {
         private void handleUserQuery(String userText) {
             LogUtils.logWithCaller(Thread.currentThread().getStackTrace(), "start");
             // 1) 日本語エリアに追加
-            uiHandler.post(() -> {
-                tvJapanese.append("▶ ユーザー: " + userText + "\n");
-            });
+//            uiHandler.post(() -> {
+//                tvJapanese.append("▶ ユーザー: " + userText + "\n");
+//            });
 
             // 2) chatHistory にユーザー発話を追加
             JsonObject userMsg = new JsonObject();
@@ -278,22 +300,22 @@ public class HomeFragment extends Fragment {
             // 2) 英訳 (ユーザー発話) を取得して表示
             new Thread(() -> {
                 String userEn = translateText(userText);
-                uiHandler.post(() -> {
-                    tvEnglish.append("▶ You: " + userEn + "\n");
-                });
+//                uiHandler.post(() -> {
+//                    tvEnglish.append("▶ You: " + userEn + "\n");
+//                });
                 // 3) ChatGPT 応答 (日本語) を取得
                 String replyJa = chatWithGPT(userText);
                 uiHandler.post(() -> {
-                    tvJapanese.append("◀ AI: " + replyJa + "\n");
+//                    tvJapanese.append("◀ AI: " + replyJa + "\n");
                     // --- ここから追加 ---
                     speakText(replyJa);
                     // --- ここまで追加 ---
                 });
                 // 4) 英訳 (AI応答) を取得して表示
                 String replyEn = translateText(replyJa);
-                uiHandler.post(() -> {
-                    tvEnglish.append("◀ AI: " + replyEn + "\n");
-                });
+//                uiHandler.post(() -> {
+//                    tvEnglish.append("◀ AI: " + replyEn + "\n");
+//                });
 
                 // 日本語ユーザー発話をDBに
                 ChatMessage u = new ChatMessage();

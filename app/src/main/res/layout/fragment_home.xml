@@ -11,33 +11,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- 日本語表示エリア -->
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="#FAFAFA">
-            <TextView
-                android:id="@+id/tvJapanese"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="16dp"
-                android:textSize="16sp" />
-        </ScrollView>
 
-        <!-- 英語翻訳表示エリア -->
-        <ScrollView
+        <!-- 会話履歴：RecyclerView を横2列表示 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvChat"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="#EFEFEF">
-            <TextView
-                android:id="@+id/tvEnglish"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="16dp"
-                android:textSize="16sp" />
-        </ScrollView>
+            />
 
         <Button
             android:id="@+id/btnVoiceStart"
