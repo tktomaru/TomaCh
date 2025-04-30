@@ -348,8 +348,10 @@ public class HomeFragment extends Fragment {
                 OkHttpClient client = new OkHttpClient();
                 // リクエストボディに chatHistory をセット
                 JsonObject body = new JsonObject();
-                body.addProperty("model", "gpt-3.5-turbo");
+                body.addProperty("model", "gpt-4o");
                 body.add("messages", chatHistory);
+                // ② 温度を上げて人間らしさを演出
+                body.addProperty("temperature", 0.8);
 
                 JsonArray msgs = new JsonArray();
                 // system ロールで日本語会話を指定
