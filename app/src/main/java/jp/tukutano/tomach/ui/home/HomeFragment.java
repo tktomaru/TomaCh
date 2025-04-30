@@ -124,8 +124,8 @@ public class HomeFragment extends Fragment {
                 if (res == TextToSpeech.LANG_MISSING_DATA
                         || res == TextToSpeech.LANG_NOT_SUPPORTED) {
                     Log.e("TTS", "日本語TTSがサポートされていません");
+                } else {
                 }
-            } else {
                 Log.e("TTS", "TTS 初期化失敗");
             }
         });
@@ -301,10 +301,10 @@ public class HomeFragment extends Fragment {
 //            });
 
             // 2) chatHistory にユーザー発話を追加
-            JsonObject userMsg = new JsonObject();
-            userMsg.addProperty("role", "user");
-            userMsg.addProperty("content", userText);
-            chatHistory.add(userMsg);
+//            JsonObject userMsg = new JsonObject();
+//            userMsg.addProperty("role", "user");
+//            userMsg.addProperty("content", userText);
+//            chatHistory.add(userMsg);
 
             // 2) 英訳 (ユーザー発話) を取得して表示
             new Thread(() -> {
@@ -353,6 +353,7 @@ public class HomeFragment extends Fragment {
         }
         private String chatWithGPT(String userMessage) {
             LogUtils.logWithCaller(Thread.currentThread().getStackTrace(), "start");
+            LogUtils.logWithCaller(Thread.currentThread().getStackTrace(), "chatHistory:" + String.valueOf(chatHistory));
             LogUtils.logWithCaller(Thread.currentThread().getStackTrace(), "temperature:" + String.valueOf(temperature));
             try {
                 OkHttpClient client =  new OkHttpClient.Builder()
@@ -399,10 +400,10 @@ public class HomeFragment extends Fragment {
                         .get("content").getAsString().trim();
 
                 // ■■ AI応答を chatHistory に追加 ■■
-                JsonObject assistantMsg = new JsonObject();
-                assistantMsg.addProperty("role", "assistant");
-                assistantMsg.addProperty("content", assistantText);
-                chatHistory.add(assistantMsg);
+//                JsonObject assistantMsg = new JsonObject();
+//                assistantMsg.addProperty("role", "assistant");
+//                assistantMsg.addProperty("content", assistantText);
+//                chatHistory.add(assistantMsg);
 
                 return assistantText;
             } catch (SocketTimeoutException e) {
