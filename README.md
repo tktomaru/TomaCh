@@ -1,0 +1,2 @@
+# TomaCh
+ChatGPTと会話をするためのAndroidアプリケーション
