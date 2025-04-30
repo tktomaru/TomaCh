@@ -33,10 +33,12 @@ ChatGPTと会話をするためのAndroidアプリケーション
    - 履歴を起点に chatHistory（API 送信用 JSON 配列）を常に最新化
    
 
-# 楽曲一覧画面
+# 会話画面
 <img src="https://github.com/user-attachments/assets/b26c1b72-e2de-42c0-9f8a-709b9560edd4" width="300px">
 
+# 設定画面
 <img src="https://github.com/user-attachments/assets/dbb2f107-8d77-4205-8a31-beffd9b5716f" width="300px">
 
+# 履歴画面
 <img src="https://github.com/user-attachments/assets/00bac54a-5c49-4671-86ec-edf7cf2fb72f" width="300px">
 
