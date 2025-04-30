@@ -32,8 +32,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import jp.tukutano.tomach.R;
 import jp.tukutano.tomach.databinding.FragmentHomeBinding;
@@ -65,11 +67,13 @@ public class HomeFragment extends Fragment {
     private static final String PREFS_NAME = "openai_prefs";
     private static final String KEY_SHOW_ENGLISH = "show_english";
     private static final String KEY_API = "api_key";
+    private static final String KEY_TEMPERATURE = "temperature";
     private String savedApiKey = "";
 
     private HomeViewModel viewModel;
     private RecyclerView rvChat;
     private ChatAdapter adapter;
+    private double temperature;  // 0.0～1.0
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -174,6 +178,11 @@ public class HomeFragment extends Fragment {
         // 1) 保存済み設定を読み込んで初期状態をセット
         boolean showEnglish = settings.getBoolean(KEY_SHOW_ENGLISH, true);
         adapter.setShowEnglish(showEnglish);
+
+        // 追加：temperature 初期値読み込み（0.8 がデフォルト）
+        temperature = Double.longBitsToDouble(
+                settings.getLong(KEY_TEMPERATURE, Double.doubleToLongBits(0.8))
+        );
 
         // 最初のリスニング開始
         startListening();
@@ -344,14 +353,19 @@ public class HomeFragment extends Fragment {
         }
         private String chatWithGPT(String userMessage) {
             LogUtils.logWithCaller(Thread.currentThread().getStackTrace(), "start");
+            LogUtils.logWithCaller(Thread.currentThread().getStackTrace(), "temperature:" + String.valueOf(temperature));
             try {
-                OkHttpClient client = new OkHttpClient();
+                OkHttpClient client =  new OkHttpClient.Builder()
+                        .connectTimeout(30, TimeUnit.SECONDS)   // 接続タイムアウト
+                        .writeTimeout(30, TimeUnit.SECONDS)     // 書き込みタイムアウト
+                        .readTimeout(60, TimeUnit.SECONDS)      // 読み取りタイムアウト
+                        .build();
                 // リクエストボディに chatHistory をセット
                 JsonObject body = new JsonObject();
                 body.addProperty("model", "gpt-4o");
                 body.add("messages", chatHistory);
                 // ② 温度を上げて人間らしさを演出
-                body.addProperty("temperature", 0.8);
+                body.addProperty("temperature", temperature);
 
                 JsonArray msgs = new JsonArray();
                 // system ロールで日本語会話を指定
@@ -391,6 +405,9 @@ public class HomeFragment extends Fragment {
                 chatHistory.add(assistantMsg);
 
                 return assistantText;
+            } catch (SocketTimeoutException e) {
+                Log.e("HomeFragment", "chatWithGPT timeout", e);
+                return "[エラー] 通信がタイムアウトしました。後でもう一度お試しください。";
             } catch (Exception e) {
                 e.printStackTrace();
                 return "[Error]";
@@ -434,6 +451,9 @@ public class HomeFragment extends Fragment {
                         .getAsJsonObject("message")
                         .get("content").getAsString();
                 return en.trim();
+            } catch (SocketTimeoutException e) {
+                Log.e("HomeFragment", "chatWithGPT timeout", e);
+                return "[エラー] 通信がタイムアウトしました。後でもう一度お試しください。";
             } catch (Exception e) {
                 e.printStackTrace();
                 return "[Error]";

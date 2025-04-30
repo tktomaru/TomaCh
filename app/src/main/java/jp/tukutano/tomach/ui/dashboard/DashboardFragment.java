@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,10 +52,14 @@ public class DashboardFragment extends Fragment {
     private FragmentDashboardBinding binding;
     private EditText etApiKey;
     private Button btnSave;
+    private SeekBar sbTemperature;
+    private TextView tvTempValue;
+    private double temperature;  // 0.0～1.0
     // プリファレンス名・キー
     private static final String PREFS_NAME = "openai_prefs";
     private static final String KEY_API = "api_key";
     private static final String KEY_SHOW_ENGLISH = "show_english";
+    private static final String KEY_TEMPERATURE = "temperature";
     private SwitchCompat switchEnglish;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -84,6 +89,33 @@ public class DashboardFragment extends Fragment {
                     .putBoolean(KEY_SHOW_ENGLISH, isChecked)
                     .apply();
             // Adapter 側に表示切替を通知
+        });
+
+
+        // 追加：temperature 初期値読み込み（0.8 がデフォルト）
+        temperature = Double.longBitsToDouble(
+                settings.getLong(KEY_TEMPERATURE, Double.doubleToLongBits(0.8))
+        );
+
+        sbTemperature = root.findViewById(R.id.sbTemperature);
+        tvTempValue   = root.findViewById(R.id.tvTempValue);
+
+        // SeekBar の進捗は temperature×100
+        sbTemperature.setProgress((int)(temperature * 100));
+        tvTempValue.setText(String.format(Locale.getDefault(), "%.2f", temperature));
+
+        sbTemperature.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                temperature = progress / 100.0;
+                tvTempValue.setText(String.format(Locale.getDefault(), "%.2f", temperature));
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {
+                // 値を保存
+                settings.edit()
+                        .putLong(KEY_TEMPERATURE, Double.doubleToLongBits(temperature))
+                        .apply();
+            }
         });
         return root;
     }

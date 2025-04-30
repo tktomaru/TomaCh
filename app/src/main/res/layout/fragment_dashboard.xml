@@ -54,4 +54,35 @@
         app:layout_constraintTop_toBottomOf="@id/btnSaveApiKey"
         app:layout_constraintStart_toStartOf="@id/etApiKey"/>
 
+
+    <TextView
+        android:id="@+id/tvTempLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="応答の多様性 (temperature):"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/switchEnglish"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"/>
+
+    <TextView
+        android:id="@+id/tvTempValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0.8"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/switchEnglish"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"/>
+
+    <SeekBar
+        android:id="@+id/sbTemperature"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tvTempLabel"
+        app:layout_constraintStart_toStartOf="@id/tvTempLabel"
+        app:layout_constraintEnd_toEndOf="@id/tvTempValue"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
